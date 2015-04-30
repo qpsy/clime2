@@ -1,0 +1,17 @@
+7b1f5280176309a47d1d8bafe6ef2f79 *ChangeLog
+ac296fe49dd1b09fa80d1c8bd0982028 *DESCRIPTION
+9484be1a7a151c2ff4c9eb7d353dd3d4 *NAMESPACE
+a12c2187cb2eef4131a6339fe3a86bba *R/clime.R
+7c11d6f8ff64631bc93bb8111f648e09 *R/cv.clime.R
+77be283382ec7c96092c15b60719dbf4 *R/cv.part.R
+7ed5445459935dc83dc4533b07899b57 *R/likelihood.R
+29ae3ec6d58f62e0f1eaed9be6613f32 *R/linprogPD.R
+63e22d8b674a9dc78ddcd6ac1c166632 *R/linprogS.R
+46eecbcc62749f5cacccbfe592a57d5e *R/print.clime.R
+2410a91fa8f0432464f4b88a7f613356 *R/print.cv.clime.R
+309dfb28fd8347d6a3f3b4a5709fa973 *R/tracel2.R
+fe28920b66cef78849a2a42ef6adc687 *man/clime-internal.Rd
+565e5bb5700da16227cade4705326f2f *man/clime.Rd
+d0bb659404752638e2bd2e978d8d0a08 *man/cv.clime.Rd
+0ad7051ee0f16c7813b657519a000cf9 *man/print.clime.Rd
+910497d29a395d248a27b94e0e13abbd *man/print.cv.clime.Rd
