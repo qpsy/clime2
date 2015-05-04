@@ -1,11 +1,11 @@
-linprogPD <- function(x0, A, b, epsilon, pdtol=1e-3, pdmaxiter=50) {
+linprogPD2 <- function(x0, A, b, epsilon, pdtol=1e-3, pdmaxiter=50) {
   ## Solves
   ## min ||x||_1   subject to  ||Ax-b||_\infty <= epsilon
   ## Adapted from Matlab code for Dantzig Selector by J. Romberg
   N <- length(x0)
   x0 <- matrix(x0, nrow=N)
   b <- matrix(b, nrow=N)
-  
+
   alpha=0.01;
   beta=0.5;
   mu = 10;
@@ -103,7 +103,7 @@ linprogPD <- function(x0, A, b, epsilon, pdtol=1e-3, pdmaxiter=50) {
       fu2p <- fu2 + s*(-dx-du)
       fe1p <- fe1 + s*AtAdx
       fe2p <- fe2 + s*(-AtAdx)
-      
+
       lamu1p <- lamu1 + s*dlamu1
       lamu2p <- lamu2 + s*dlamu2
       lame1p <- lame1 + s*dlame1

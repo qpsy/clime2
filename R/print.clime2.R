@@ -1,4 +1,4 @@
-print.clime <- function(x,digits = max(3, getOption("digits") - 3), ... ) {
+print.clime2 <- function(x,digits = max(3, getOption("digits") - 3), ... ) {
   cat("\n clime options summary: \n")
   cat(" perturb=", signif(x$perturb, digits), "\t standardize=", x$standardize)
   cat("\n lambdas used:\n")

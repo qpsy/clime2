@@ -1,4 +1,4 @@
-linprogS <- function(Sigma, e, lambda) {
+linprogS2 <- function(Sigma, e, lambda) {
   p <- nrow(Sigma)
   if (p!=ncol(Sigma)) stop("Sigma should be a square matrix!")
 
