@@ -69,9 +69,10 @@ clime2 <- function(x, lambda=NULL,
 
     for (jl in 1:nlambda) {
       Omega <- matrix(0, nrow=p, ncol=p)
-      lam <- lambda[jl]
+      lam <- lambdga[jl]
       for (j in 1:p) {
-        beta <- linprogPD2(Omega0[,j], Sigma, emat[,j], lam, pdtol, pdmaxiter)
+        # beta <- linprogPD2(Omega0[,j], Sigma, emat[,j], lam, pdtol, pdmaxiter)
+        beta <- linprogPD2C(Omega0[,j], Sigma, emat[,j], lam, pdtol, pdmaxiter)$xp
         Omega[,j] <- beta
       }
       Omegalist[[jl]] <- Omega*(abs(Omega)<= abs(t(Omega)))+ t(Omega)*(abs(Omega)> abs(t(Omega)))

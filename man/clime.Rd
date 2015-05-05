@@ -7,7 +7,7 @@
   values for the constraint lambda.
 }
 \usage{
-clime(x, lambda=NULL, nlambda=ifelse(is.null(lambda),100,length(lambda)),
+clime2(x, lambda=NULL, nlambda=ifelse(is.null(lambda),100,length(lambda)),
       lambda.max=0.8, lambda.min=ifelse(nrow(x)>ncol(x), 1e-4, 1e-2),
       sigma=FALSE, perturb=TRUE, standardize=TRUE, logspaced=TRUE,
       linsolver=c("primaldual", "simplex"), pdtol=1e-3, pdmaxiter=50)
@@ -95,7 +95,7 @@ clime(x, lambda=NULL, nlambda=ifelse(is.null(lambda),100,length(lambda)),
 n <- 50
 p <- 5
 X <- matrix(rnorm(n*p), nrow=n)
-re.clime <- clime(X)
+re.clime <- clime2(X)
 
 ## tridiagonal matrix example
 bandMat <- function(p, k) {

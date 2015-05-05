@@ -5,9 +5,10 @@ using namespace Rcpp;
 using namespace arma;
 
 // [[Rcpp::export]]
-Rcpp::List linprogPD2C(vec x, mat A, vec b,
+Rcpp::List linprogPD2C(arma::vec x, arma::mat A, arma::vec b,
 									 double epsilon, double pdtol=1e-3, int pdmaxiter=50) {
 
+	vec xp, up, Atrp, AtAvp, fu1p, fu2p, fe1p, fe2p, lamu1p, lamu2p, lame1p, lame2p, rdp;
 	vec Atr = A*x - b;
 
 	if (max(abs(Atr)) > epsilon) {
@@ -36,17 +37,18 @@ Rcpp::List linprogPD2C(vec x, mat A, vec b,
 	vec flu2 = fu2 % lamu2;
 	vec fle1 = fe1 % lame1;
 	vec fle2 = fe2 % lame2;
-  double sdg = sum(flu1) + sum(flu2) + sum(fle1) + sum(fle2);
+  double sdg = -sum(flu1) - sum(flu2) - sum(fle1) - sum(fle2);
 	double tau = mu*4*N/sdg;
 
 	vec gradf0 = join_cols(zeros(N), ones(N));
 	vec rdual = gradf0 + join_cols(lamu1 - lamu2 + AtAv, -lamu1 - lamu2);
-	vec rcent = join_cols(join_cols(flu1, flu2), join_cols(fle1, fle2)) - 1/tau;
+	vec rcent = -join_cols(join_cols(flu1, flu2), join_cols(fle1, fle2)) - 1/tau;
 	double resnorm = sqrt(accu(join_cols(pow(rdual, 2), pow(rcent, 2))));
 
 	int pditer = 0;
-	bool done = (sdg < pdtol) || (pditer >= pdmaxiter)
-	//while (!done) {
+	bool done = (sdg < pdtol) || (pditer >= pdmaxiter);
+
+	while (!done) {
 		vec w2 = -1 - (1/fu1 + 1/fu2)/tau;
 
     vec sig11 = -lamu1/fu1 - lamu2/fu2;
@@ -61,7 +63,8 @@ Rcpp::List linprogPD2C(vec x, mat A, vec b,
 
 		if (1/cond(Hp) < 1e-14) {
 			Rcpp::warning("Ill conditioned matrix.  Previous iterate matrix returned! (May increase perturb/lambda.)");
-			return wrap(x);
+			xp = x;
+		  return List::create(Named("xp") = xp);
 		}
 
 		vec AtAdx = A*dx;
@@ -85,26 +88,95 @@ Rcpp::List linprogPD2C(vec x, mat A, vec b,
 		uvec ifu2 = find((-dx-du) > 0);
 		uvec ife1 = find(AtAdx > 0);
 		uvec ife2 = find(AtAdx < 0);
-		vec aa = AtAdx.elem(ife1);
 
-		//double smax = min( -lamu1[iu1]/dlamu1[iu1], -lamu2[iu2]/dlamu2[iu2], -lame1[ie1]/dlame1[ie1], -lame2[ie2]/dlame2[ie2], -fu1[ifu1]/(dx[ifu1] - du[ifu1]), -fu2[ifu2]/(-dx[ifu2] -du[ifu2]), -fe1[ife1]/AtAdx[ife1], -fe2[ife2]/( - AtAdx[ife2])   );
-    //double smax = min(1, smax);
-    //double s = 0.99*smax;
-		//}
-	return Rcpp::List::create(Rcpp::Named("x0") = AtAdx,
-														Rcpp::Named("A") = aa,
-														Rcpp::Named("b") = ife1
-		);
+		vec smax1 = join_cols(-lamu1.elem(iu1)/dlamu1.elem(iu1),
+													-lamu2.elem(iu2)/dlamu2.elem(iu2));
+		vec smax2 = join_cols(-lame1.elem(ie1)/dlame1.elem(ie1),
+													-lame2.elem(ie2)/dlame2.elem(ie2));
+		vec smax3 = join_cols(-fu1.elem(ifu1)/(dx.elem(ifu1) - du.elem(ifu1)),
+													-fu2.elem(ifu2)/(-dx.elem(ifu2) -du.elem(ifu2)));
+		vec smax4 = join_cols(-fe1.elem(ife1)/AtAdx.elem(ife1),
+													-fe2.elem(ife2)/(-AtAdx.elem(ife2)));
+		vec smaxV = join_cols(join_cols(smax1, smax2), join_cols(smax3, smax4));
+		double smax = min(smaxV);
+		if (smax > 1) smax = 1;
+
+    double s = 0.99*smax;
+
+		bool suffdec = FALSE;
+		int backiter = 0;
+
+		while(!suffdec) {
+			xp = x + s*dx;
+			up = u + s*du;
+			Atrp = Atr + s*AtAdx;
+			AtAvp = AtAv + s*AtAdv;
+
+			fu1p = fu1 + s*(dx - du);
+			fu2p = fu2 + s*(-dx-du);
+			fe1p = fe1 + s*AtAdx;
+			fe2p = fe2 + s*(-AtAdx);
+
+			lamu1p = lamu1 + s*dlamu1;
+			lamu2p = lamu2 + s*dlamu2;
+			lame1p = lame1 + s*dlame1;
+			lame2p = lame2 + s*dlame2;
+
+			rdp = gradf0 + join_cols(lamu1p - lamu2p + AtAvp, -lamu1p - lamu2p);
+			vec rcp = -join_cols(join_cols(lamu1p%fu1p, lamu2p%fu2p),
+													 join_cols(lame1p%fe1p, lame2p%fe2p)) - 1/tau;
+			suffdec = sqrt(accu(join_cols(pow(rdp, 2), pow(rcp, 2)))) <
+				(1 - alpha*s)*resnorm;
+
+			s = beta*s;
+			backiter = backiter + 1;
+
+			if (backiter > 32) {
+				Rcpp::warning("Backtracking stuck.  Previous iterate matrix returned!");
+				xp = x;
+			  return List::create(Named("xp") = xp);
+			}
+		}
+
+		x = xp;
+    u = up;
+    Atr = Atrp;
+    AtAv = AtAvp;
+    fu1 = fu1p;
+    fu2 = fu2p;
+    fe1 = fe1p;
+    fe2 = fe2p;
+    lamu1 = lamu1p;
+    lamu2 = lamu2p;
+    lame1 = lame1p;
+    lame2 = lame2p;
+
+		flu1 = fu1 % lamu1;
+		flu2 = fu2 % lamu2;
+		fle1 = fe1 % lame1;
+		fle2 = fe2 % lame2;
+		sdg = -sum(flu1) - sum(flu2) - sum(fle1) - sum(fle2);
+		tau = mu*4*N/sdg;
+		rdual = rdp;
+		rcent = -join_cols(join_cols(flu1, flu2), join_cols(fle1, fle2)) - 1/tau;
+		resnorm = sqrt(accu(join_cols(pow(rdual, 2), pow(rcent, 2))));
+
+		pditer = pditer + 1;
+    done = (sdg < pdtol) || (pditer >= pdmaxiter);
+
+	}
+
+	return List::create(Named("xp") = xp);
 }
 
 
 /*** R
 # library(microbenchmark)
 set.seed(2)
-X <- matrix(rnorm(300), ncol=3)
-emat <- diag(3)
-lam <- 1
-Sigma <- var(X)
-Omega0 <- solve(Sigma)
+X = matrix(rnorm(300), ncol=3)
+emat = diag(3)
+lam = 1
+Sigma = var(X)
+Omega0 = solve(Sigma)
 linprogPD2C(Omega0[,1], Sigma, emat[,1], lam)
 */

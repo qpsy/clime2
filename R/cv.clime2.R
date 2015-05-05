@@ -17,7 +17,7 @@ cv.clime2 <- function(clime.obj, loss=c("likelihood", "tracel2"), fold=5) {
   loss.re <- matrix(0, nrow = fold, ncol = nlambda)
   for (j in 1:fold) {
       x.train <- x[part.list$trainMat[,j],]
-      clime.cv <- clime(x.train, lambda, standardize = FALSE, perturb = clime.obj$perturb, linsolver=lpfun)
+      clime.cv <- clime2(x.train, lambda, standardize = FALSE, perturb = clime.obj$perturb, linsolver=lpfun)
       x.test <- x[part.list$testMat[,j],]
       ntest <- nrow(x.test)
       for (jl in 1:nlambda) {

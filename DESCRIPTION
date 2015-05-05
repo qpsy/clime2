@@ -1,4 +1,4 @@
-Package: clime
+Package: clime2
 Type: Package
 Title: Constrained L1-minimization for Inverse (covariance) Matrix
         Estimation
@@ -13,4 +13,4 @@ Description: A robust constrained L1 minimization method for estimating
         matrix), and recovering its support for building graphical
         models.  The computation uses linear programming.
 License: GPL-2
-LinkingTo: Rcpp
+LinkingTo: Rcpp, RcppArmadillo
